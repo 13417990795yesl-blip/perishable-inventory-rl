@@ -1,0 +1,16 @@
+# Paper Table 5. Configuration only; Phase 6 is not implemented.
+learning_rate: 0.00025
+batch_size: 73
+n_epochs: 10
+gamma: 0.99
+gae_lambda: 0.95
+clip_range: 0.2
+vf_coef: 0.5
+ent_coef: 0.0
+# Reproduction defaults proposed in the protocol, not paper parameters.
+policy: MlpPolicy
+net_arch: [64, 64]
+seed: 42
+# Paper does not specify rollout length/training budget sufficiently.
+n_steps: null
+total_timesteps: null

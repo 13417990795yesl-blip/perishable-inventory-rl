@@ -1,0 +1,26 @@
+# Baseline: paper Tables 3/4; user-selected conventional delivery timing.
+case: 1
+shelf_life: 3
+lead_time: 1
+qmax: 10
+regular_price: 10.0
+discount_percent: [0, 30, 50]
+price_sensitivity: [0.3, 0.5, 0.7]
+demand_mean: 4.0
+demand_cv: 0.50
+# User-selected interpretation: utility uses p/regular_price; revenue uses p.
+# Keep the paper's numeric b unchanged; author implementation is unverified.
+demand_price_basis: relative
+costs:
+  holding: 1.0
+  ordering: 3.0
+  lost_sales: 5.0
+  perishable: 7.0
+gamma: 0.99
+episode_steps: 365
+# Reproduction choice, not specified in paper.
+seed: 42
+# User selected conventional lead time: q_t is available at t+lead_time.
+arrival_timing: before_next_period_sales
+# Preserve continuous sales; DP approximates the value function on a grid.
+demand_discretization: continuous

@@ -1,0 +1,14 @@
+# Numerical choices, not parameters supplied by the paper.
+grid_step: 0.0078125
+grid_kind: near_zero_refined
+dense_end: 2.0
+coarse_step: 0.25
+gamma: 0.99
+bellman_tolerance: 0.0000001
+max_iterations: 5000
+validation_grid_steps: [0.03125, 0.015625, 0.0078125]
+value_shift_acceleration: true
+validation_seed_count: 100
+paired_profit_change_limit: 0.5
+projection: bilinear_value_interpolation
+demand_integration: gamma_incomplete_moments_full_tail

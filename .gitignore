@@ -1,0 +1,17 @@
+# Environments and disposable caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+tmp/
+
+# Generated experiment evidence and restorable archives stay on disk.
+checkpoints/
+results/
+
+# Downloaded reference; its source URL is recorded in README.md.
+docs/references/*.pdf
