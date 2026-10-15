@@ -8,6 +8,26 @@
 
 服务器项目：`/data1/yesiliang/perishable_inventory_rl`
 
+## 同组同学快速开始
+
+使用Python 3.10，在自己的计算机或服务器上克隆并安装依赖：
+
+```bash
+git clone https://github.com/13417990795yesl-blip/perishable-inventory-rl.git
+cd perishable-inventory-rl
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pytest -q tests
+python -m experiments.validate environment
+```
+
+Windows PowerShell把激活命令替换为 `.\.venv\Scripts\Activate.ps1`。以上操作不需要访问作者的服务器路径。
+
+单次DP求解运行 `python -m algorithms.dp`；完整网格与策略审计运行 `python -m experiments.validate dp`。运行完整审计前建议把 `OMP_NUM_THREADS`、`OPENBLAS_NUM_THREADS`、`MKL_NUM_THREADS` 设为1，以保持与已记录计时一致。
+
+Git仓库包含代码、配置、测试和计算说明。实验原始数据、日志、已训练策略及恢复归档保存在原服务器，未随代码上传；在新机器运行时会重新生成所需输出。当前结果和建模约定见下文及 `docs/relative_price_revision.md`。代码版本标签为 `relative-price-dp-v1`。
+
 ## 当前模型版本
 
 2026-10-14 按用户明确要求切换为相对价格需求：效用使用实际售价/原价，收入继续使用实际售价。配置显式记录`demand_price_basis: relative`。修改前的实际价格版本已完整归档，新结果输出到各目录下的`relative_price/`。本次修订、兼容性与重算说明见`docs/relative_price_revision.md`。下文历史Phase4数据属于此前实际价格版本，不应与新结果混用。
