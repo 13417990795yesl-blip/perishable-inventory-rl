@@ -8,7 +8,7 @@
 
 服务器项目：`/data1/yesiliang/perishable_inventory_rl`
 
-## 同组同学快速开始
+## 快速开始
 
 使用Python 3.10，在自己的计算机或服务器上克隆并安装依赖：
 
