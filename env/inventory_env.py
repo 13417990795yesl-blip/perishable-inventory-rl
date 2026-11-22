@@ -29,6 +29,8 @@ class InventoryConfig:
     costs: dict = field(default_factory=lambda: {"holding": 1., "ordering": 3., "lost_sales": 5., "perishable": 7.})
     episode_steps: int = 365
     seed: int = 42
+    exclude_empty_from_mnl: bool = False
+    purchase_utility: float = 0.0
 
     def __post_init__(self):
         """Reject invalid parameters instead of silently changing the model."""
@@ -37,6 +39,8 @@ class InventoryConfig:
             minimum = 0 if key in ["qmax", "seed"] else 1
             if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
                 raise ValueError(f"invalid {key}")
+        if not np.isfinite(self.purchase_utility):
+            raise ValueError("purchase utility must be finite")
         if self.demand_price_basis not in ("absolute", "relative"):
             raise ValueError("demand_price_basis must be absolute or relative")
         for key in ["regular_price", "demand_mean", "demand_cv"]:
@@ -79,7 +83,7 @@ class InventoryEnv(gym.Env):
 
     Actions are [order, discount_index_age1,...,discount_index_ageM].
     State has M on-shelf groups and L-1 outstanding delivery groups.
-    No FIFO substitution, rounding, availability renormalization or shaping.
+    Uses continuous sales with no within-period substitution.
     """
 
     metadata = {"render_modes": ["ansi"]}
@@ -116,6 +120,9 @@ class InventoryEnv(gym.Env):
         self._elapsed = 0
         return self._state.copy(), {}
 
+    def _sample_total_demand(self):
+        return sample_demand(self.np_random, self.config.demand_mean, self.config.demand_cv)
+
     def step(self, action):
         """Return next observation, profit, termination, truncation and ledger."""
         if self._state is None or self._elapsed >= self.config.episode_steps:
@@ -125,8 +132,9 @@ class InventoryEnv(gym.Env):
             raise ValueError("action requires valid integer order and discount indices")
         c = self.config
         prices = c.regular_price * (1.0 - np.asarray(c.discount_percent)[raw[1:]] / 100.0)
-        shares = demand_shares(prices, c.price_sensitivity, c.demand_price_scale)
-        total_demand = sample_demand(self.np_random, c.demand_mean, c.demand_cv)
+        available = self._state[:c.shelf_life] > 0 if c.exclude_empty_from_mnl else None
+        shares = demand_shares(prices, c.price_sensitivity, c.demand_price_scale, available, c.purchase_utility)
+        total_demand = self._sample_total_demand()
         self._state, reward, info = transition(self._state, int(raw[0]), prices, total_demand * shares, c.shelf_life, c.lead_time, c.costs)
         self._elapsed += 1
         info.update(total_demand=total_demand, demand_shares=shares.copy(), outside_demand=total_demand * (1. - shares.sum()),

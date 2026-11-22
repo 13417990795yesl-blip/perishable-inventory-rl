@@ -171,7 +171,7 @@ def residual_kernel(stock, shares, grid_step, levels, mean, cv, grid=None):
 class GridDP:
     """Full-action baseline DP using sparse transition kernels."""
 
-    def __init__(self, config=None, options=None):
+    def __init__(self, config=None, options=None, *, ordered_prices_only=False):
         """Enumerate states/actions and build expected rewards and P_h."""
         started = time.perf_counter()
         self.config, self.options = config or InventoryConfig(), options or DPOptions()
@@ -182,34 +182,73 @@ class GridDP:
         self.levels = len(self.grid)
         self.orders = np.arange(c.qmax+1)
         self.price_indices = np.array(list(product(range(len(c.discount_percent)), repeat=3)), dtype=np.int64)
+        if ordered_prices_only:
+            discounts = np.asarray(c.discount_percent)[self.price_indices]
+            self.price_indices = self.price_indices[np.all(np.diff(discounts, axis=1) >= 0, axis=1)]
         self.prices = c.regular_price*(1-np.asarray(c.discount_percent)[self.price_indices]/100)
-        self.shares = np.array([demand_shares(p, c.price_sensitivity, c.demand_price_scale) for p in self.prices])
+        self.shares = np.array([demand_shares(p, c.price_sensitivity, c.demand_price_scale,
+                                         purchase_utility=c.purchase_utility) for p in self.prices])
         self.shape = (c.qmax+1, self.levels, self.levels)
         self.state_count, self.action_count = int(np.prod(self.shape)), len(self.orders)*len(self.prices)
         self.kernels, self.rewards = [], []
         self.kernel_diagnostics = {"max_mass_error_before_cleanup": 0., "minimum_before_cleanup": 0.}
-        for price, shares in zip(self.prices, self.shares):
-            rows, columns, probabilities = [], [], []
-            for fresh in self.orders:
-                for age2, stock2 in enumerate(self.grid):
-                    indices, masses, audit = residual_kernel([fresh, stock2], shares[:2], o.grid_step, self.levels, c.demand_mean, c.demand_cv, self.grid)
-                    rows.extend([fresh*self.levels+age2]*len(indices))
-                    columns.extend(indices)
-                    probabilities.extend(masses)
-                    key = "max_mass_error_before_cleanup"
-                    self.kernel_diagnostics[key] = max(self.kernel_diagnostics[key], audit["mass_error_before_cleanup"])
-                    key = "minimum_before_cleanup"
-                    self.kernel_diagnostics[key] = min(self.kernel_diagnostics[key], audit[key])
-            self.kernels.append(sparse.csr_matrix((probabilities, (rows, columns)), shape=((c.qmax+1)*self.levels, self.levels**2)))
-            s0 = expected_sales(self.orders, shares[0], c.demand_mean, c.demand_cv)[:,None,None]
-            s1 = expected_sales(self.grid, shares[1], c.demand_mean, c.demand_cv)[None,:,None]
-            s2 = expected_sales(self.grid, shares[2], c.demand_mean, c.demand_cv)[None,None,:]
-            r0, r1, r2 = self.orders[:,None,None]-s0, self.grid[None,:,None]-s1, self.grid[None,None,:]-s2
-            lost = c.demand_mean*shares.sum()-s0-s1-s2
-            self.rewards.append(price[0]*s0+price[1]*s1+price[2]*s2-c.costs["holding"]*(r0+r1)-c.costs["perishable"]*r2-c.costs["lost_sales"]*lost)
-        self.rewards = np.array(self.rewards)
+        # Oldest stock expires, but its availability still affects surviving demand.
+        for price_index, price in enumerate(self.prices):
+            oldest_modes = (False, True) if c.exclude_empty_from_mnl else (None,)
+            for oldest_available in oldest_modes:
+                self._build_price_kernel(price_index, price, oldest_available)
+        if not c.exclude_empty_from_mnl:
+            self.rewards = np.array(self.rewards)
         self.build_seconds = time.perf_counter()-started
         self.values = self.policy = self.continuations = self.summary = None
+
+    def _shares_for(self, price_index, available):
+        c = self.config
+        if not c.exclude_empty_from_mnl:
+            return self.shares[price_index]
+        return demand_shares(self.prices[price_index], c.price_sensitivity,
+                             c.demand_price_scale, available, c.purchase_utility)
+
+    def _build_price_kernel(self, price_index, price, oldest_available):
+        c, o = self.config, self.options
+        shares_by_presence = {
+            (fresh, age2): self._shares_for(price_index, [fresh, age2, oldest_available])
+            for fresh, age2 in product((False, True), repeat=2)
+        }
+        rows, columns, probabilities = [], [], []
+        for fresh in self.orders:
+            for age2, stock2 in enumerate(self.grid):
+                shares = shares_by_presence[fresh > 0, stock2 > 0]
+                indices, masses, audit = residual_kernel(
+                    [fresh, stock2], shares[:2], o.grid_step, self.levels,
+                    c.demand_mean, c.demand_cv, self.grid)
+                rows.extend([fresh*self.levels+age2]*len(indices))
+                columns.extend(indices)
+                probabilities.extend(masses)
+                key = "max_mass_error_before_cleanup"
+                self.kernel_diagnostics[key] = max(self.kernel_diagnostics[key], audit["mass_error_before_cleanup"])
+                key = "minimum_before_cleanup"
+                self.kernel_diagnostics[key] = min(self.kernel_diagnostics[key], audit[key])
+        self.kernels.append(sparse.csr_matrix((probabilities, (rows, columns)),
+                            shape=(len(self.orders)*self.levels, self.levels**2)))
+        oldest = self.grid if oldest_available is None else self.grid[1:] if oldest_available else self.grid[:1]
+        reward = np.empty((len(self.orders), self.levels, len(oldest)))
+        for (fresh, age2), shares in shares_by_presence.items():
+            f = slice(1, None) if fresh else slice(0, 1)
+            a = slice(1, None) if age2 else slice(0, 1)
+            x0, x1, x2 = self.orders[f, None, None], self.grid[a][None, :, None], oldest[None, None, :]
+            s0, s1, s2 = (expected_sales(x, share, c.demand_mean, c.demand_cv)
+                          for x, share in zip((x0, x1, x2), shares))
+            lost = c.demand_mean*shares.sum()-s0-s1-s2
+            reward[f, a] = (price[0]*s0+price[1]*s1+price[2]*s2
+                            -c.costs["holding"]*(x0-s0+x1-s1)
+                            -c.costs["perishable"]*(x2-s2)-c.costs["lost_sales"]*lost)
+        self.rewards.append(reward)
+
+    def _oldest_slice(self, kernel_index):
+        if not self.config.exclude_empty_from_mnl:
+            return slice(None)
+        return slice(1, None) if kernel_index % 2 else slice(0, 1)
 
     def bellman(self, values, return_policy=False):
         """Apply T_h to all actions, factoring repeated order calculations."""
@@ -221,11 +260,14 @@ class GridDP:
             order_values = continuation-self.config.costs["ordering"]*self.orders
             best_orders = order_values.argmax(axis=2)
             candidate = self.rewards[p]+order_values.max(axis=2)[:,:,None]
-            better = candidate > result
-            result = np.maximum(result, candidate)
+            oldest = self._oldest_slice(p)
+            better = candidate > result[:, :, oldest]
+            np.maximum(result[:, :, oldest], candidate, out=result[:, :, oldest])
             if return_policy:
-                policy[...,0][better] = np.broadcast_to(best_orders[:,:,None], self.shape)[better]
-                policy[...,1:][better] = self.price_indices[p]
+                selected = policy[:, :, oldest]
+                selected[..., 0][better] = np.broadcast_to(best_orders[:, :, None], candidate.shape)[better]
+                price_index = p // 2 if self.config.exclude_empty_from_mnl else p
+                selected[..., 1:][better] = self.price_indices[price_index]
         return (result, policy) if return_policy else result
 
     def solve(self, initial_values=None):
@@ -263,6 +305,9 @@ class GridDP:
                         "demand_price_basis":self.config.demand_price_basis,"demand_price_scale":self.config.demand_price_scale,
                         "grid_kind":self.options.grid_kind,"dense_end":self.options.dense_end,"coarse_step":self.options.coarse_step,
                         "value_shift_acceleration":self.options.value_shift_acceleration,
+                        "exclude_empty_from_mnl": self.config.exclude_empty_from_mnl,
+                        "price_sensitivity": list(self.config.price_sensitivity),
+                        "purchase_utility": self.config.purchase_utility,
                         "states": self.state_count, "actions": self.action_count,
                         "iterations": iteration, "bellman_residual": residual,
                         "projected_value_error_bound": residual/(1-self.options.gamma),
@@ -293,8 +338,23 @@ class GridDP:
         low = min(max(int(np.searchsorted(self.grid,x[1],side="right"))-1,0),self.levels-1)
         high = min(low+1,self.levels-1)
         fraction = (x[1]-self.grid[low])/(self.grid[high]-self.grid[low]) if high > low else 0.
-        continuation = (1-fraction)*self.continuations[:,fresh,low,:]+fraction*self.continuations[:,fresh,high,:]
-        immediate = np.array([expected_reward(x, p, s, self.config.costs, self.config.demand_mean, self.config.demand_cv) for p, s in zip(self.prices, self.shares)])
+        c = self.config
+        indices = np.arange(len(self.prices))
+        if c.exclude_empty_from_mnl:
+            indices = 2*indices + int(x[2] > 0)
+        continuation = ((1-fraction)*self.continuations[indices, fresh, low]
+                        + fraction*self.continuations[indices, fresh, high])
+        shares = [self._shares_for(p, x > 0) for p in range(len(self.prices))]
+        if c.exclude_empty_from_mnl and low == 0 and x[1] > 0:
+            # Interpolation across zero mixes two different choice sets.
+            values = self.values.reshape(len(self.orders), -1)
+            for p, share in enumerate(shares):
+                columns, masses, _ = residual_kernel(
+                    x[:2], share[:2], self.options.grid_step, self.levels,
+                    c.demand_mean, c.demand_cv, self.grid)
+                continuation[p] = self.options.gamma*(values[:, columns] @ masses)
+        immediate = np.array([expected_reward(x, p, share, c.costs, c.demand_mean, c.demand_cv)
+                              for p, share in zip(self.prices, shares)])
         q_values = immediate[:,None]+continuation-self.config.costs["ordering"]*self.orders
         price_index, order = np.unravel_index(q_values.argmax(), q_values.shape)
         return np.concatenate(([order], self.price_indices[price_index])).astype(np.int64)
@@ -305,6 +365,7 @@ class GridDP:
             raise RuntimeError("solve before saving")
         np.savez_compressed(path, values=self.values, policy=self.policy,
                             continuations=self.continuations,
+                            price_indices=self.price_indices,
                             config_json=json.dumps(asdict(self.config)),
                             options_json=json.dumps(asdict(self.options)),
                             summary_json=json.dumps(self.summary))
@@ -326,8 +387,11 @@ class GridDP:
             obj.grid = inventory_grid(c.qmax,o)
             obj.levels = len(obj.grid)
             obj.price_indices = np.array(list(product(range(len(c.discount_percent)), repeat=3)), dtype=np.int64)
+            if "price_indices" in data:
+                obj.price_indices = data["price_indices"].copy()
             obj.prices = c.regular_price*(1-np.asarray(c.discount_percent)[obj.price_indices]/100)
-            obj.shares = np.array([demand_shares(p, c.price_sensitivity, c.demand_price_scale) for p in obj.prices])
+            obj.shares = np.array([demand_shares(p, c.price_sensitivity, c.demand_price_scale,
+                                         purchase_utility=c.purchase_utility) for p in obj.prices])
             obj.values, obj.policy = data["values"].copy(), data["policy"].copy()
             obj.continuations = data["continuations"].copy()
             obj.summary = json.loads(str(data["summary_json"]))
@@ -339,6 +403,8 @@ class GridDP:
 def output_paths(config):
     """Keep results and checkpoints separated by the demand price convention."""
     label=f"{config.demand_price_basis}_price"
+    if config.exclude_empty_from_mnl:
+        label += "_available_only"
     paths={"checkpoints":Path("checkpoints")/label,
            "logs":Path("results/logs")/label,"tables":Path("results/tables")/label}
     for path in paths.values():

@@ -1,0 +1,434 @@
+[
+  {
+    "prices": [
+      10.0,
+      7.0,
+      5.0
+    ],
+    "price_indices": [
+      0,
+      1,
+      2
+    ],
+    "empty_state_discounted_value": 572.6813154393204,
+    "iterations": 47,
+    "bellman_residual": 8.047629762586439e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      7.0,
+      7.0
+    ],
+    "price_indices": [
+      0,
+      1,
+      1
+    ],
+    "empty_state_discounted_value": 559.4857706536558,
+    "iterations": 32,
+    "bellman_residual": 7.193170858954545e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      7.0,
+      10.0
+    ],
+    "price_indices": [
+      0,
+      1,
+      0
+    ],
+    "empty_state_discounted_value": 550.3547551229728,
+    "iterations": 11,
+    "bellman_residual": 2.407773536106106e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      10.0,
+      7.0
+    ],
+    "price_indices": [
+      0,
+      0,
+      1
+    ],
+    "empty_state_discounted_value": 548.8565089139266,
+    "iterations": 12,
+    "bellman_residual": 1.3817725630360655e-08,
+    "empty_state_order": 1
+  },
+  {
+    "prices": [
+      10.0,
+      10.0,
+      5.0
+    ],
+    "price_indices": [
+      0,
+      0,
+      2
+    ],
+    "empty_state_discounted_value": 545.0894780158962,
+    "iterations": 18,
+    "bellman_residual": 1.9253775462857448e-08,
+    "empty_state_order": 1
+  },
+  {
+    "prices": [
+      7.0,
+      7.0,
+      5.0
+    ],
+    "price_indices": [
+      1,
+      1,
+      2
+    ],
+    "empty_state_discounted_value": 525.0206697019801,
+    "iterations": 17,
+    "bellman_residual": 1.9860522115777712e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      10.0,
+      10.0
+    ],
+    "price_indices": [
+      0,
+      0,
+      0
+    ],
+    "empty_state_discounted_value": 522.6867072447562,
+    "iterations": 8,
+    "bellman_residual": 7.114749678294174e-09,
+    "empty_state_order": 1
+  },
+  {
+    "prices": [
+      7.0,
+      7.0,
+      7.0
+    ],
+    "price_indices": [
+      1,
+      1,
+      1
+    ],
+    "empty_state_discounted_value": 503.5339545608565,
+    "iterations": 12,
+    "bellman_residual": 5.5252371566894e-09,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      5.0,
+      5.0
+    ],
+    "price_indices": [
+      1,
+      2,
+      2
+    ],
+    "empty_state_discounted_value": 489.59030183220705,
+    "iterations": 16,
+    "bellman_residual": 5.327621011019801e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      7.0,
+      10.0
+    ],
+    "price_indices": [
+      1,
+      1,
+      0
+    ],
+    "empty_state_discounted_value": 481.2615752929207,
+    "iterations": 10,
+    "bellman_residual": 7.460300821549026e-09,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      5.0,
+      7.0
+    ],
+    "price_indices": [
+      1,
+      2,
+      1
+    ],
+    "empty_state_discounted_value": 479.5472327017088,
+    "iterations": 14,
+    "bellman_residual": 3.7515633266593795e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      5.0,
+      5.0
+    ],
+    "price_indices": [
+      0,
+      2,
+      2
+    ],
+    "empty_state_discounted_value": 470.2692466724704,
+    "iterations": 108,
+    "bellman_residual": 8.733201184440986e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      5.0,
+      10.0
+    ],
+    "price_indices": [
+      1,
+      2,
+      0
+    ],
+    "empty_state_discounted_value": 467.68205402693144,
+    "iterations": 13,
+    "bellman_residual": 2.613353444758104e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      5.0,
+      7.0
+    ],
+    "price_indices": [
+      0,
+      2,
+      1
+    ],
+    "empty_state_discounted_value": 461.53621388073685,
+    "iterations": 18,
+    "bellman_residual": 8.893886160876718e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      10.0,
+      5.0
+    ],
+    "price_indices": [
+      1,
+      0,
+      2
+    ],
+    "empty_state_discounted_value": 460.16352326804144,
+    "iterations": 16,
+    "bellman_residual": 1.495419610364479e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      10.0,
+      5.0,
+      10.0
+    ],
+    "price_indices": [
+      0,
+      2,
+      0
+    ],
+    "empty_state_discounted_value": 455.62814503614425,
+    "iterations": 21,
+    "bellman_residual": 4.22348875872558e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      10.0,
+      7.0
+    ],
+    "price_indices": [
+      1,
+      0,
+      1
+    ],
+    "empty_state_discounted_value": 426.0747706482533,
+    "iterations": 11,
+    "bellman_residual": 8.337281087733572e-09,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      7.0,
+      10.0,
+      10.0
+    ],
+    "price_indices": [
+      1,
+      0,
+      0
+    ],
+    "empty_state_discounted_value": 396.42009713654153,
+    "iterations": 9,
+    "bellman_residual": 3.343927801324753e-09,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      5.0,
+      5.0
+    ],
+    "price_indices": [
+      2,
+      2,
+      2
+    ],
+    "empty_state_discounted_value": 249.1278222973618,
+    "iterations": 17,
+    "bellman_residual": 5.6633751910339925e-08,
+    "empty_state_order": 3
+  },
+  {
+    "prices": [
+      5.0,
+      7.0,
+      5.0
+    ],
+    "price_indices": [
+      2,
+      1,
+      2
+    ],
+    "empty_state_discounted_value": 243.9606880740919,
+    "iterations": 14,
+    "bellman_residual": 3.333093445689883e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      5.0,
+      7.0
+    ],
+    "price_indices": [
+      2,
+      2,
+      1
+    ],
+    "empty_state_discounted_value": 238.00655739349017,
+    "iterations": 13,
+    "bellman_residual": 2.3192967546492582e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      5.0,
+      10.0
+    ],
+    "price_indices": [
+      2,
+      2,
+      0
+    ],
+    "empty_state_discounted_value": 230.2544344701193,
+    "iterations": 11,
+    "bellman_residual": 4.4205080484971404e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      7.0,
+      7.0
+    ],
+    "price_indices": [
+      2,
+      1,
+      1
+    ],
+    "empty_state_discounted_value": 222.3266677283814,
+    "iterations": 11,
+    "bellman_residual": 1.6690222537363297e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      7.0,
+      10.0
+    ],
+    "price_indices": [
+      2,
+      1,
+      0
+    ],
+    "empty_state_discounted_value": 208.75057096726576,
+    "iterations": 10,
+    "bellman_residual": 1.1027424307030742e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      10.0,
+      5.0
+    ],
+    "price_indices": [
+      2,
+      0,
+      2
+    ],
+    "empty_state_discounted_value": 206.56207585135687,
+    "iterations": 16,
+    "bellman_residual": 2.2204687866178574e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      10.0,
+      7.0
+    ],
+    "price_indices": [
+      2,
+      0,
+      1
+    ],
+    "empty_state_discounted_value": 173.38323797996156,
+    "iterations": 10,
+    "bellman_residual": 7.201498419817653e-08,
+    "empty_state_order": 2
+  },
+  {
+    "prices": [
+      5.0,
+      10.0,
+      10.0
+    ],
+    "price_indices": [
+      2,
+      0,
+      0
+    ],
+    "empty_state_discounted_value": 156.2079210500492,
+    "iterations": 9,
+    "bellman_residual": 1.2783488045897684e-08,
+    "empty_state_order": 2
+  }
+]

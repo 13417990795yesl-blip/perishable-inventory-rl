@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def demand_shares(prices, sensitivity, price_scale=1.0):
+def demand_shares(prices, sensitivity, price_scale=1.0, available=None, purchase_utility=0.0):
     """Return MNL shares from actual prices divided by an explicit unit scale.
 
     price_scale=regular_price means relative price (1,.7,.5). The numeric
@@ -22,8 +22,17 @@ def demand_shares(prices, sensitivity, price_scale=1.0):
     if not np.isscalar(price_scale) or not np.isfinite(price_scale) or price_scale <= 0:
         raise ValueError("price_scale must be finite and positive")
     # Eq. (1): lambda_j = exp(-b_j*p_j)/(1 + sum(exp(-b_k*p_k))).
-    weights = np.exp(-sensitivity * (prices / price_scale))
-    return weights / (1.0 + weights.sum())
+    if not np.isfinite(purchase_utility):
+        raise ValueError("purchase utility must be finite")
+    utility = purchase_utility - sensitivity * (prices / price_scale)
+    if available is not None:
+        available = np.asarray(available, dtype=bool)
+        if available.shape != prices.shape:
+            raise ValueError("availability must match prices")
+        utility = np.where(available, utility, -np.inf)
+    shift = max(0.0, np.max(utility, initial=-np.inf))
+    weights = np.exp(utility - shift)
+    return weights / (np.exp(-shift) + weights.sum())
 
 
 def sample_demand(rng, mean, cv):
